@@ -26,15 +26,13 @@ app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 //app.use(cors({ origin: '*', credentials: true }));
 //const cors = require("cors");
-
 app.use(cors({
   origin: [
-    "https://cbt-system-vert.vercel.app",  // Allow your Vercel frontend
-    "http://localhost:3000"                // Optional: For local development
+    "https://ict-cert.vercel.app",      // ✅ Correct frontend for ICT Certificate system
+    "http://localhost:3000"             // Optional: for development
   ],
   credentials: true
 }));
-
 // ✅ Ensure upload directories exist
 const uploadDir = path.join(__dirname, "uploads");
 const scheduleDir = path.join(__dirname, "uploads/schedules");
