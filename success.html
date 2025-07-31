@@ -127,7 +127,7 @@
       document.getElementById("spinner").remove();
       tokenDisplay.textContent = "No reference provided.";
     } else {
-      fetch(`https://testpro-mvh8.onrender.com/api/payment/verify/${reference}`)
+      fetch(`https://ict-cert.onrender.com/api/payment/verify/${reference}`)
         .then(res => res.json())
         .then(data => {
           document.getElementById("spinner").remove();
@@ -146,7 +146,7 @@
             };
 
             proceedBtn.onclick = () => {
-              window.location.href = "https://cbt-system-vert.vercel.app/token-validate.html";
+              window.location.href = "token-validate.html";
             };
           } else {
             tokenDisplay.textContent = data.message || "Token not found.";
