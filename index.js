@@ -193,7 +193,45 @@ app.get("/api/admin/access-groups", async (req, res) => {
   }
 });
 
+// ✅ Route to create a reusable Paystack split code
+app.post('/api/split/create', async (req, res) => {
+  try {
+    const response = await axios.post(
+      'https://api.paystack.co/split',
+      {
+        name: 'CBT Token Split Group',
+        type: 'percentage',
+        currency: 'NGN',
+        subaccounts: [
+          {
+            subaccount: 'ACCT_370jqx88t6rgcz4',
+            share: 70
+          }
+        ],
+        bearer_type: 'subaccount', // ✅ Subaccount bears the transaction fee
+        bearer_subaccount: 'ACCT_370jqx88t6rgcz4'
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
 
+    res.json({
+      message: '✅ Split group created successfully',
+      split_code: response.data.data.split_code,
+      full_data: response.data.data
+    });
+  } catch (error) {
+    console.error("❌ Split creation error:", error.response?.data || error.message);
+    return res.status(500).json({
+      error: 'Failed to create split group',
+      details: error.response?.data || error.message
+    });
+  }
+});
 // ✅ Initialize payment for Paystack popup (NO callback_url)
 app.post('/api/payment/initialize', async (req, res) => {
   const { email, amount } = req.body;
