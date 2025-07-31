@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin - Certificates</title>
+  <style>
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #222;
+      --box-bg: #ffffff;
+      --header-color: #007bff;
+      --table-head: #ddd;
+      --button-bg: #007bff;
+      --button-hover: #0056b3;
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --box-bg: #1e1e1e;
+      --header-color: #00bfff;
+      --table-head: #2a2a2a;
+      --button-bg: #00bfff;
+      --button-hover: #009fe0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    .toggle {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+    }
+
+    .toggle button,
+    .download-btn {
+      padding: 10px 16px;
+      background-color: var(--button-bg);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      font-size: 14px;
+    }
+
+    .toggle button:hover,
+    .download-btn:hover {
+      background-color: var(--button-hover);
+      color: white;
+    }
+
+    h1, h2, header {
+      text-align: center;
+      color: var(--header-color);
+    }
+
+    .student-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+     th, td {
+      border: 1px solid #555;
+      padding: 10px;
+      text-align: left;
+    }
+
+     th {
+      background-color: var(--table-head);
+      color: var(--text-color);
+    }
+
+    .download-btn {
+      display: block;
+      margin: 20px auto;
+    }
+
+    #sessionList {
+      margin-top: 15px;
+      padding-left: 20px;
+    }
+
+    #sessionList li {
+      margin-bottom: 5px;
+    }
+      #search {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      background-color: var(--search-bg);
+      color: var(--text-color);
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    
+  </style>
+</head>
+<body>
+
+  <header>Certificate Applications</header>
+
+  <main>
+    <div class="card">
+      <h2>Applied Students</h2>
+      <div class="loading" id="loading">Loading...</div>
+      <div class="error" id="error"></div>
+      <table id="certTable" style="display: none;">
+        <thead>
+          <tr>
+            <th>Full Name</th>
+            <th>Matric Number</th>
+            <th>Department</th>
+            <th>Email</th>
+            <th>Date Applied</th>
+          </tr>
+        </thead>
+        <tbody id="certBody"></tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    function getDepartment(matric) {
+      const prefixes = {
+        "S/": "Science Lab Tech",
+        "Cos/": "Computer Science",
+        "Coe/": "Computer Engineering",
+        "B/": "Business Admin",
+        "Est/": "Estate Management",
+        "E/": "Electrical Engineering",
+        "M/": "Mass Communication",
+        "A/": "Accountancy",
+        "Mlt/": "Medical Lab Tech"
+      };
+
+      for (let prefix in prefixes) {
+        if (matric.startsWith(prefix)) {
+          return prefixes[prefix];
+        }
+      }
+      return "Unknown";
+    }
+
+    async function fetchCertificates() {
+      const loading = document.getElementById('loading');
+      const error = document.getElementById('error');
+      const table = document.getElementById('certTable');
+      const tbody = document.getElementById('certBody');
+
+      try {
+        const res = await fetch('https://ict-cert.onrender.com//api/certificates'); // replace with real endpoint
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.message || 'Failed to fetch');
+
+        loading.style.display = 'none';
+        table.style.display = 'table';
+
+        data.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${item.fullName}</td>
+            <td>${item.matricNumber}</td>
+            <td>${getDepartment(item.matricNumber)}</td>
+            <td>${item.email}</td>
+            <td>${new Date(item.createdAt).toLocaleString()}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        loading.style.display = 'none';
+        error.textContent = err.message;
+      }
+    }
+
+    fetchCertificates();
+  </script>
+
+</body>
+</html>
