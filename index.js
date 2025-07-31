@@ -419,6 +419,60 @@ app.post('/api/apply-certificate', async (req, res) => {
     res.status(500).json({ message: "Failed to submit application." });
   }
 });
+
+//✅ Create PDF and Email Certificate 
+app.post('/api/apply-certificate', upload.single('passport'), async (req, res) => {
+  try {
+    const { fullName, matricNumber, department, level, phone, email, token } = req.body;
+
+    const existingToken = await Token.findOne({ token });
+
+    if (!existingToken || existingToken.used) {
+      return res.status(400).json({ error: 'Invalid or already used token' });
+    }
+
+    // Mark token as used
+    existingToken.used = true;
+    await existingToken.save();
+
+    // Save applicant in DB
+    const student = new Student({ fullName, matricNumber, department, level, phone, email, passport: req.file.path });
+    await student.save();
+
+    // Create PDF
+    const pdfPath = `./certificates/${matricNumber}-certificate.pdf`;
+    const doc = new PDFDocument();
+    doc.pipe(fs.createWriteStream(pdfPath));
+    doc.fontSize(20).text('Certificate of Completion', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(14).text(`This certifies that ${fullName}`, { align: 'center' });
+    doc.text(`from ${department} (${level})`, { align: 'center' });
+    doc.text(`Matric No: ${matricNumber}`, { align: 'center' });
+    doc.moveDown();
+    doc.text(`Issued by Certificate Board`, { align: 'center' });
+    doc.end();
+
+    // Send email with attachment
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Your Certificate is Ready',
+      text: `Hello ${fullName},\n\nAttached is your official certificate.\n\nBest regards,\nCertificate Team`,
+      attachments: [{
+        filename: `${matricNumber}-certificate.pdf`,
+        path: pdfPath
+      }]
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({ message: 'Certificate applied and emailed successfully.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // 🟢 Default Route
 app.get("/", (req, res) => {
   res.send("✅ CBT System + Payment API is running!");
