@@ -384,6 +384,41 @@ app.post('/api/apply-certificate', async (req, res) => {
   }
 });
 
+//✅ Apply Certificate 
+app.post('/api/apply-certificate', async (req, res) => {
+  const { email, matric, token } = req.body;
+
+  if (!email || !matric || !token) {
+    return res.status(400).json({ message: "Email, matric number, and token are required." });
+  }
+
+  try {
+    // 1. Validate Token
+    const validToken = await Token.findOne({ token, studentEmail: email, status: 'success' });
+    if (!validToken) {
+      return res.status(400).json({ message: "Invalid or unauthorized token." });
+    }
+
+    // 2. Check for duplicate matric number
+    const existingApp = await CertificateApplication.findOne({ matric });
+    if (existingApp) {
+      return res.status(409).json({ message: "Application with this matric number already exists." });
+    }
+
+    // 3. Save application
+    const newApp = new CertificateApplication({ email, matric, token });
+    await newApp.save();
+
+    // Optional: Invalidate token to prevent reuse
+    validToken.status = "used";
+    await validToken.save();
+
+    res.status(201).json({ message: "Certificate application submitted successfully." });
+  } catch (err) {
+    console.error("Certificate apply error:", err);
+    res.status(500).json({ message: "Failed to submit application." });
+  }
+});
 // 🟢 Default Route
 app.get("/", (req, res) => {
   res.send("✅ CBT System + Payment API is running!");
