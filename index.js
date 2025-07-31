@@ -27,12 +27,9 @@ app.use("/uploads", express.static("uploads"));
 //app.use(cors({ origin: '*', credentials: true }));
 //const cors = require("cors");
 app.use(cors({
-  origin: [
-    "https://ict-cert.vercel.app",      // ✅ Correct frontend for ICT Certificate system
-    "http://localhost:3000"             // Optional: for development
-  ],
-  credentials: true
+  origin: "https://ict-cert.vercel.app"
 }));
+
 // ✅ Ensure upload directories exist
 const uploadDir = path.join(__dirname, "uploads");
 const scheduleDir = path.join(__dirname, "uploads/schedules");
