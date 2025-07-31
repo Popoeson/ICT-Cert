@@ -420,6 +420,16 @@ app.post('/api/apply-certificate', async (req, res) => {
   }
 });
 
+// ✅ Get Applied Students 
+app.get('/api/applied-students', async (req, res) => {
+  try {
+    const students = await Student.find().sort({ createdAt: -1 });
+    res.json(students);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 //✅ Create PDF and Email Certificate 
 app.post('/api/apply-certificate', upload.single('passport'), async (req, res) => {
   try {
