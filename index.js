@@ -233,14 +233,37 @@ app.post('/api/split/create', async (req, res) => {
   }
 });
 // ✅ Initialize payment for Paystack popup (NO callback_url)
+//app.post('/api/payment/initialize', async (req, res) => {
+//  const { email, amount } = req.body;
+
+//  try {
+//    const response = await axios.post('https://api.paystack.co/transaction/initialize', {
+    //  email,
+  //    amount: amount * 100     split_code: 'SPL_wRVJKCtJsj'
+//    }, {
+    //  headers: {
+   //     Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+    //    'Content-Type': 'application/json',
+ //     },
+//    });
+
+ //   const { authorization_url, reference } = response.data.data;
+
+//    await Transaction.create({ email, amount, reference });
+//    res.json({ authorization_url, reference })  } catch (error) {
+//    console.error("Init error:", error.response?.data || error.message);
+  //  res.status(500).json({ error: 'Payment initialization failed' })
+//}
+//});
+
+// ✅ Initialize payment for Paystack popup (cleaned for test mode no split code)
 app.post('/api/payment/initialize', async (req, res) => {
   const { email, amount } = req.body;
 
   try {
     const response = await axios.post('https://api.paystack.co/transaction/initialize', {
       email,
-      amount: amount * 100,
-      split_code: 'SPL_wRVJKCtJsj'
+      amount: amount * 100
     }, {
       headers: {
         Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
@@ -257,7 +280,6 @@ app.post('/api/payment/initialize', async (req, res) => {
     res.status(500).json({ error: 'Payment initialization failed' });
   }
 });
-
 // ✅ Verify payment and generate token
 app.get('/api/payment/verify/:reference', async (req, res) => {
   const { reference } = req.params;
