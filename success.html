@@ -3,99 +3,171 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Token Generated</title>
+  <title>Payment Success - CBT Token</title>
   <style>
+    :root {
+      --bg-color: #f4f4f4;
+      --text-color: #111;
+      --box-bg: #fff;
+      --btn-bg: #007bff;
+      --btn-hover: #0056b3;
+      --shadow-color: #007bff;
+    }
+
+    body.dark {
+      --bg-color: #111;
+      --text-color: #fff;
+      --box-bg: #1a1a1a;
+      --btn-bg: #007bff;
+      --btn-hover: #0056b3;
+      --shadow-color: #007bff;
+    }
+
     body {
-      background-color: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
-      margin: 0;
-    }
-    .container {
-      background: #111;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px #0f0;
-      max-width: 500px;
-      width: 100%;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', sans-serif;
       text-align: center;
+      padding: 40px 20px;
+      transition: background-color 0.3s, color 0.3s;
     }
-    h2 {
-      color: #00ff88;
+
+    .toggle {
+      position: absolute;
+      top: 10px;
+      right: 20px;
     }
-    .token {
-      background: #222;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 8px;
-      font-size: 18px;
-      font-weight: bold;
-      color: #0f0;
-      word-break: break-all;
-    }
-    .error {
-      color: red;
-      font-weight: bold;
-    }
-    button {
-      background: #00ff88;
-      color: #000;
-      padding: 10px 20px;
-      margin-top: 20px;
-      font-size: 16px;
+
+    .toggle button {
+      background: var(--btn-bg);
+      color: #fff;
       border: none;
-      border-radius: 8px;
+      padding: 6px 12px;
+      border-radius: 4px;
       cursor: pointer;
     }
+
+    .container {
+      background-color: var(--box-bg);
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 0 12px var(--shadow-color);
+    }
+
+    h2 {
+      margin-bottom: 15px;
+    }
+
+    .message {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    .token {
+      color: var(--btn-bg);
+      font-size: 24px;
+      font-weight: bold;
+      margin: 20px 0;
+      word-break: break-word;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 10px 8px 0;
+      background-color: var(--btn-bg);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
     button:hover {
-      background: #00dd77;
+      background-color: var(--btn-hover);
+    }
+
+    /* Spinner */
+    #spinner {
+      display: inline-block;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <div class="container" id="status">
-    <h2>Verifying Payment...</h2>
+
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
+  <div class="container">
+    <h2>✅ Payment Successful</h2>
+    <p class="message">Fetching your CBT token...</p>
+
+    <div class="token" id="token"><span id="spinner">🔄</span></div>
+    <button id="copyBtn" style="display:none;">Copy Token</button>
+    <button id="proceedBtn" style="display:none;">Proceed to Token Validation</button>
   </div>
 
   <script>
-    const statusDiv = document.getElementById("status");
-    const queryParams = new URLSearchParams(window.location.search);
-    const reference = queryParams.get("reference");
+    const params = new URLSearchParams(window.location.search);
+    const reference = params.get('reference');
+
+    const tokenDisplay = document.getElementById('token');
+    const copyBtn = document.getElementById('copyBtn');
+    const proceedBtn = document.getElementById('proceedBtn');
 
     if (!reference) {
-      statusDiv.innerHTML = `<p class="error">No reference found in URL.</p>`;
+      document.getElementById("spinner").remove();
+      tokenDisplay.textContent = "No reference provided.";
     } else {
-      fetch("https://your-backend-domain.com/api/payment/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ reference })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.tokens && data.tokens.length > 0) {
-          statusDiv.innerHTML = `<h2>Token(s) Generated Successfully</h2>`;
-          data.tokens.forEach(token => {
-            const tokenDiv = document.createElement("div");
-            tokenDiv.className = "token";
-            tokenDiv.textContent = token;
-            statusDiv.appendChild(tokenDiv);
-          });
-        } else {
-          statusDiv.innerHTML = `<p class="error">Payment verified but no tokens returned.</p>`;
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        statusDiv.innerHTML = `<p class="error">Failed to verify payment. Please contact support.</p>`;
-      });
+      fetch(`https://testpro-mvh8.onrender.com/api/payment/verify/${reference}`)
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("spinner").remove();
+
+          if (data.token) {
+            tokenDisplay.textContent = data.token;
+            localStorage.setItem("myToken", data.token);
+            copyBtn.style.display = "inline-block";
+            proceedBtn.style.display = "inline-block";
+
+            copyBtn.onclick = () => {
+              navigator.clipboard.writeText(data.token).then(() => {
+                copyBtn.textContent = "Copied!";
+                setTimeout(() => copyBtn.textContent = "Copy Token", 2000);
+              });
+            };
+
+            proceedBtn.onclick = () => {
+              window.location.href = "https://cbt-system-vert.vercel.app/token-validate.html";
+            };
+          } else {
+            tokenDisplay.textContent = data.message || "Token not found.";
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById("spinner").remove();
+          tokenDisplay.textContent = "Error verifying payment.";
+        });
     }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") document.body.classList.add("dark");
+    });
   </script>
 </body>
 </html>
