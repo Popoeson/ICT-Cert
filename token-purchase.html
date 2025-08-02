@@ -1,92 +1,304 @@
-          <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Token Purchase</title>
+  <title>Buy CBT Token</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
   <style>
+    :root {
+      --bg-color: #f2f2f2;
+      --text-color: #222;
+      --input-bg: #fff;
+      --primary-color: #0074cc;
+      --button-bg: #0074cc;
+      --button-hover: #005fa3;
+      --box-bg: #ffffff;
+      --shadow-color: #0074cc;
+    }
+
+    body.dark {
+      --bg-color: #121212;
+      --text-color: #f0f0f0;
+      --input-bg: #1e1e1e;
+      --primary-color: #00ffcc;
+      --button-bg: #00ffcc;
+      --button-hover: #00e6b8;
+      --box-bg: #1e1e1e;
+      --shadow-color: #00ffcc;
+    }
+
     body {
-      background: #000;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
       margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      transition: background-color 0.3s ease, color 0.3s ease;
     }
-    .container {
-      background: #111;
-      padding: 30px;
-      border-radius: 10px;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 0 10px #0f0;
-      text-align: center;
+
+    .toggle {
+      position: absolute;
+      top: 20px;
+      right: 20px;
     }
-    input, button {
-      width: 100%;
-      padding: 12px;
-      margin: 10px 0;
-      border-radius: 8px;
+
+    .toggle button {
+      padding: 8px 14px;
       border: none;
-      font-size: 16px;
-    }
-    input {
-      background: #222;
-      color: #fff;
-    }
-    button {
-      background: #00ff88;
-      color: #000;
+      border-radius: 5px;
+      background-color: var(--button-bg);
+      color: white;
       cursor: pointer;
     }
-    button:hover {
-      background: #00dd77;
+
+    .toggle button:hover {
+      background-color: var(--button-hover);
+      color: black;
+    }
+
+    .container {
+      background-color: var(--box-bg);
+      padding: 30px 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px var(--shadow-color);
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .container h2 {
+      margin-top: 0;
+      margin-bottom: 25px;
+      font-size: 22px;
+      text-align: center;
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+      background-color: var(--input-bg);
+      color: var(--text-color);
+      box-sizing: border-box;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 4px var(--primary-color);
+    }
+
+    button.buy-btn {
+      width: 100%;
+      padding: 12px;
+      background-color: var(--button-bg);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin: 5px 0;
+    }
+
+    button.buy-btn:hover {
+      background-color: var(--button-hover);
+      color: black;
+    }
+
+    .note {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    #pollingStatus {
+      text-align: center;
+      font-size: 13px;
+      color: var(--primary-color);
+      display: none;
     }
   </style>
 </head>
 <body>
+
+  <div class="toggle">
+    <button onclick="toggleTheme()">🌓 Toggle Theme</button>
+  </div>
+
   <div class="container">
-    <h2>Purchase Token</h2>
-    <form id="paymentForm">
-      <input type="email" id="email-address" required placeholder="Enter your email" />
-      <input type="number" id="amount" required placeholder="Amount (₦)" min="100" />
-      <button type="submit">Buy Token</button>
-    </form>
+    <h2>Buy Your CBT Token</h2>
+    <div class="form-group">
+      <label for="email">Student Email</label>
+      <input type="email" id="email" placeholder="Enter your email" required />
+    </div>
+    <button class="buy-btn" onclick="payWithPaystack()">Buy Token (₦1000)</button>
+    <p id="pollingStatus">🔄 Checking for your token, please wait...</p>
+    <button class="buy-btn" onclick="checkPaymentStatus()">🔄 Check My Token</button>
+    <p class="note">If you're not redirected after payment, click "Check My Token" to retrieve your token.</p>
   </div>
 
   <script src="https://js.paystack.co/v1/inline.js"></script>
   <script>
-    const form = document.getElementById('paymentForm');
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+      localStorage.setItem("cbtTheme", document.body.classList.contains("dark") ? "dark" : "light");
+    }
 
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-
-      const email = document.getElementById('email-address').value;
-      const amount = document.getElementById('amount').value;
-
-      if (!email || !amount) {
-        alert('Please fill all fields');
-        return;
-      }
-
-      const handler = PaystackPop.setup({
-        key: 'pk_test_72e7641a30dcdbad32a51606354065cc5b62f20f', // Replace with your public key
-        email: email,
-        amount: amount * 100, // Convert to kobo
-        currency: 'NGN',
-        callback: function (response) {
-          const reference = response.reference;
-          window.location.href = `success.html?reference=${reference}`;
-        },
-        onClose: function () {
-          alert('Transaction was not completed, window closed.');
-        }
-      });
-
-      handler.openIframe();
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedTheme = localStorage.getItem("cbtTheme");
+      if (savedTheme === "dark") document.body.classList.add("dark");
     });
+
+    function payWithPaystack() {
+      const email = document.getElementById("email").value.trim();
+      if (!email) return alert("Please enter your email.");
+
+      localStorage.setItem("studentEmail", email);
+      const button = document.querySelector(".buy-btn");
+      button.disabled = true;
+      button.innerText = "Processing...";
+
+      fetch("https://testpro-mvh8.onrender.com/api/payment/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, amount: 1000 }),
+      })
+      .then(res => res.json())
+      .then(data => {
+        const reference = data.reference;
+        if (!reference) throw new Error("No reference returned");
+        localStorage.setItem("pendingRef", reference);
+
+        const handler = PaystackPop.setup({
+          key: 'pk_live_9ea850872c6c1053cbf1530b95c65bdf4535048d',
+          email,
+          amount: 100000,
+          currency: "NGN",
+          ref: reference,
+
+          callback: function () {
+            verifyAndRedirect(reference);
+          },
+
+          onClose: function () {
+            alert("Transaction not completed.");
+            button.disabled = false;
+            button.innerText = "Buy Token (1000)";
+          }
+        });
+
+        handler.openIframe();
+
+        // Auto-polling every 60 seconds (max 3 tries)
+        let count = 0;
+        const pollingStatus = document.getElementById("pollingStatus");
+        pollingStatus.style.display = "block";
+        pollingStatus.textContent = "🔄 Checking for your token, please wait...";
+
+        const interval = setInterval(() => {
+          const ref = localStorage.getItem("pendingRef");
+          if (!ref || count >= 3) {
+            pollingStatus.textContent = "⏱ Token not available yet. You can click 'Check My Token' later.";
+            clearInterval(interval);
+            return;
+          }
+
+          fetch("https://testpro-mvh8.onrender.com/api/payment/verify/" + ref)
+            .then(res => res.json())
+            .then(data => {
+              if (data.token) {
+                localStorage.setItem("myToken", data.token);
+                localStorage.removeItem("pendingRef");
+                pollingStatus.textContent = "✅ Token retrieved successfully!";
+                clearInterval(interval);
+                setTimeout(() => {
+                  window.location.href = "success.html?reference=" + ref;
+                }, 1000);
+              }
+            });
+
+          count++;
+        }, 60000); // 1 minute interval
+      })
+      .catch(err => {
+        console.error("Init failed:", err);
+        alert("Failed to initialize transaction.");
+        button.disabled = false;
+        button.innerText = "Buy Token (₦1000)";
+      });
+    }
+
+    function verifyAndRedirect(reference) {
+      const pollingStatus = document.getElementById("pollingStatus");
+      pollingStatus.style.display = "block";
+      pollingStatus.textContent = "🔄 Verifying payment after checkout...";
+
+      fetch("https://testpro-mvh8.onrender.com/api/payment/verify/" + reference)
+        .then(res => res.json())
+        .then(data => {
+          if (data.token) {
+            localStorage.setItem("myToken", data.token);
+            localStorage.removeItem("pendingRef");
+            pollingStatus.textContent = "✅ Token retrieved successfully!";
+            setTimeout(() => {
+              window.location.href = "success.html?reference=" + reference;
+            }, 1000);
+          } else {
+            pollingStatus.textContent = "❌ Token not found yet. Please try 'Check My Token'.";
+          }
+        })
+        .catch(() => {
+          pollingStatus.textContent = "❌ Could not verify payment. Please try again.";
+        });
+    }
+
+    function checkPaymentStatus() {
+      const ref = localStorage.getItem("pendingRef");
+      const pollingStatus = document.getElementById("pollingStatus");
+
+      if (!ref) return alert("No recent payment reference found.");
+
+      pollingStatus.style.display = "block";
+      pollingStatus.textContent = "🔄 Checking your token...";
+
+      fetch("https://testpro-mvh8.onrender.com/api/payment/verify/" + ref)
+        .then(res => res.json())
+        .then(data => {
+          if (data.token) {
+            localStorage.setItem("myToken", data.token);
+            localStorage.removeItem("pendingRef");
+            pollingStatus.textContent = "✅ Token retrieved successfully!";
+            setTimeout(() => {
+              window.location.href = "success.html?reference=" + ref;
+            }, 1000);
+          } else {
+            pollingStatus.textContent = "❌ Token not found yet. Please try again later.";
+          }
+        })
+        .catch(() => {
+          pollingStatus.textContent = "❌ Could not verify payment. Try again.";
+        });
+    }
   </script>
 </body>
-</html>
+          </html>
