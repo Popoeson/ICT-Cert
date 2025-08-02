@@ -232,51 +232,26 @@ app.post('/api/split/create', async (req, res) => {
     });
   }
 });
+
 // ✅ Initialize payment for Paystack popup (NO callback_url)
-//app.post('/api/payment/initialize', async (req, res) => {
-//  const { email, amount } = req.body;
-
-//  try {
-//    const response = await axios.post('https://api.paystack.co/transaction/initialize', {
-    //  email,
-  //    amount: amount * 100     split_code: 'SPL_wRVJKCtJsj'
-//    }, {
-    //  headers: {
-   //     Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-    //    'Content-Type': 'application/json',
- //     },
-//    });
-
- //   const { authorization_url, reference } = response.data.data;
-
-//    await Transaction.create({ email, amount, reference });
-//    res.json({ authorization_url, reference })  } catch (error) {
-//    console.error("Init error:", error.response?.data || error.message);
-  //  res.status(500).json({ error: 'Payment initialization failed' })
-//}
-//});
-
-// ✅ Initialize payment for Paystack popup (TEST MODE, NO SPLIT CODE)
 app.post('/api/payment/initialize', async (req, res) => {
   const { email, amount } = req.body;
 
   try {
-    const response = await axios.post(
-      'https://api.paystack.co/transaction/initialize',
-      { email, amount: amount * 100 },
-      {
-        headers: {
-          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    const response = await axios.post('https://api.paystack.co/transaction/initialize', {
+      email,
+      amount: amount * 100,
+      // split_code: 'SPL_wRVJKCtJsj' // 🔒 Commented out: transaction splitting disabled
+    }, {
+      headers: {
+        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
     const { authorization_url, reference } = response.data.data;
 
-    // Save reference before redirect
-    await Transaction.create({ email, amount, reference, status: "pending" });
-
+    await Transaction.create({ email, amount, reference });
     res.json({ authorization_url, reference });
   } catch (error) {
     console.error("Init error:", error.response?.data || error.message);
@@ -284,20 +259,17 @@ app.post('/api/payment/initialize', async (req, res) => {
   }
 });
 
-
-// ✅ Verify payment and generate token (POST version)
-app.post('/api/payment/verify', async (req, res) => {
-  const { reference } = req.body;
+// ✅ Verify payment and generate token
+app.get('/api/payment/verify/:reference', async (req, res) => {
+  const { reference } = req.params;
 
   try {
     const response = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
       headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` },
     });
 
-    const paystackData = response.data.data;
-    const status = paystackData.status;
+    const status = response.data.data.status;
 
-    // Match by Paystack reference, not old one in DB
     const transaction = await Transaction.findOneAndUpdate(
       { reference },
       { status },
@@ -340,11 +312,10 @@ app.post('/api/payment/verify', async (req, res) => {
       return res.status(400).json({ message: 'Payment not successful', status });
     }
   } catch (error) {
-    console.error("Verify error:", error.response?.data || error.message);
+    console.error("Verify error:", error.message);
     return res.status(500).json({ error: 'Payment verification failed' });
   }
 });
-
 // Validate Email Before Auto-Generating
 app.post('/api/tokens/check-email', async (req, res) => {
   const { email } = req.body;
