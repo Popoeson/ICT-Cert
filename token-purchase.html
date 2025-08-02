@@ -178,7 +178,7 @@
       button.disabled = true;
       button.innerText = "Processing...";
 
-      fetch("https://testpro-mvh8.onrender.com/api/payment/initialize", {
+      fetch("https://ict-cert.onrender.com/api/payment/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, amount: 1000 }),
@@ -190,7 +190,7 @@
         localStorage.setItem("pendingRef", reference);
 
         const handler = PaystackPop.setup({
-          key: 'pk_live_9ea850872c6c1053cbf1530b95c65bdf4535048d',
+          key: 'pk_test_72e7641a30dcdbad32a51606354065cc5b62f20f',
           email,
           amount: 100000,
           currency: "NGN",
@@ -253,7 +253,7 @@
       pollingStatus.style.display = "block";
       pollingStatus.textContent = "🔄 Verifying payment after checkout...";
 
-      fetch("https://testpro-mvh8.onrender.com/api/payment/verify/" + reference)
+      fetch("https://ict-cert.onrender.com/api/payment/verify/" + reference)
         .then(res => res.json())
         .then(data => {
           if (data.token) {
@@ -281,7 +281,7 @@
       pollingStatus.style.display = "block";
       pollingStatus.textContent = "🔄 Checking your token...";
 
-      fetch("https://testpro-mvh8.onrender.com/api/payment/verify/" + ref)
+      fetch("https://ict-cert.onrender.com/api/payment/verify/" + ref)
         .then(res => res.json())
         .then(data => {
           if (data.token) {
