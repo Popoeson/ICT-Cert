@@ -290,7 +290,7 @@ app.get('/api/payment/verify/:reference', async (req, res) => {
         });
       }
 
-      const tokenCode = 'CBT-' + Math.floor(100000 + Math.random() * 900000);
+      const tokenCode = 'CERT-' + Math.floor(100000 + Math.random() * 900000);
 
       const newToken = new Token({
         token: tokenCode,
