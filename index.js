@@ -256,41 +256,48 @@ app.post('/api/split/create', async (req, res) => {
 //}
 //});
 
-// ✅ Initialize payment for Paystack popup (cleaned for test mode no split code)
+// ✅ Initialize payment for Paystack popup (TEST MODE, NO SPLIT CODE)
 app.post('/api/payment/initialize', async (req, res) => {
   const { email, amount } = req.body;
 
   try {
-    const response = await axios.post('https://api.paystack.co/transaction/initialize', {
-      email,
-      amount: amount * 100
-    }, {
-      headers: {
-        Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await axios.post(
+      'https://api.paystack.co/transaction/initialize',
+      { email, amount: amount * 100 },
+      {
+        headers: {
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
 
     const { authorization_url, reference } = response.data.data;
 
-    await Transaction.create({ email, amount, reference });
+    // Save reference before redirect
+    await Transaction.create({ email, amount, reference, status: "pending" });
+
     res.json({ authorization_url, reference });
   } catch (error) {
     console.error("Init error:", error.response?.data || error.message);
     res.status(500).json({ error: 'Payment initialization failed' });
   }
 });
-// ✅ Verify payment and generate token
-app.get('/api/payment/verify/:reference', async (req, res) => {
-  const { reference } = req.params;
+
+
+// ✅ Verify payment and generate token (POST version)
+app.post('/api/payment/verify', async (req, res) => {
+  const { reference } = req.body;
 
   try {
     const response = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
       headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` },
     });
 
-    const status = response.data.data.status;
+    const paystackData = response.data.data;
+    const status = paystackData.status;
 
+    // Match by Paystack reference, not old one in DB
     const transaction = await Transaction.findOneAndUpdate(
       { reference },
       { status },
@@ -333,7 +340,7 @@ app.get('/api/payment/verify/:reference', async (req, res) => {
       return res.status(400).json({ message: 'Payment not successful', status });
     }
   } catch (error) {
-    console.error("Verify error:", error.message);
+    console.error("Verify error:", error.response?.data || error.message);
     return res.status(500).json({ error: 'Payment verification failed' });
   }
 });
